@@ -8,17 +8,16 @@ import { botAccessGrantFacts, type BotAccessGrant } from '../../../../shared/bot
 import { BOT_ACCESS_COPY } from '../../../../shared/bots/bot-access-copy'
 import type { BotAccessConnector } from '../../../../shared/bots/bot-access-reach'
 import { BotAccessReachList } from './BotAccessReach'
+import { getBotAccessPlace, useBotAccessPlace } from './use-bot-access-place'
 
 /** The grant, and the bot and connector whose reach the confirm lists. */
 export type BotAccessConfirm = BotAccessGrant & {
   details: { bot: Bot; connector: BotAccessConnector }
 }
 
-// This window is on the computer the bot runs on.
-const PLACE = { computer: BOT_ACCESS_COPY.thisComputer, there: BOT_ACCESS_COPY.here }
-
 function AccessFacts({ grant }: { grant: BotAccessConfirm }): React.JSX.Element {
   const t = useTranslate()
+  const place = useBotAccessPlace(grant.details.bot.hostId)
   const { identity } = botAccessGrantFacts(grant)
   const factLine = 'flex gap-2.5'
   const factIcon = 'mt-0.5 size-4 shrink-0 text-muted-foreground'
@@ -49,7 +48,7 @@ function AccessFacts({ grant }: { grant: BotAccessConfirm }): React.JSX.Element 
           <KeyRound className={factIcon} aria-hidden />
           {t('bots.access.yourAccess', BOT_ACCESS_COPY.yourAccess, {
             name: grant.botName,
-            ...PLACE
+            ...place
           })}
         </p>
         <p className={factLine}>
@@ -61,12 +60,13 @@ function AccessFacts({ grant }: { grant: BotAccessConfirm }): React.JSX.Element 
   )
 }
 
-/** Adding people lets them drive the bot, and through it this computer, so it is always confirmed first. */
+/** Access grants are confirmed before anyone can work on the execution host. */
 export function useConfirmBotAccess(): (grant: BotAccessConfirm) => Promise<boolean> {
   const confirm = useConfirmationDialog()
   return useCallback(
     (grant) => {
       const { person: one, count } = botAccessGrantFacts(grant)
+      const where = getBotAccessPlace(grant.details.bot.hostId)
       const place = grant.workspace
         ? translate('bots.access.place', BOT_ACCESS_COPY.place, {
             connector: grant.connector,
@@ -89,12 +89,12 @@ export function useConfirmBotAccess(): (grant: BotAccessConfirm) => Promise<bool
               person: one,
               name: grant.botName,
               place,
-              ...PLACE
+              ...where
             })
           : translate('bots.access.descriptionMany', BOT_ACCESS_COPY.descriptionMany, {
               name: grant.botName,
               place,
-              ...PLACE
+              ...where
             }),
         details: <AccessFacts grant={grant} />,
         confirmLabel: translate('bots.access.confirm', BOT_ACCESS_COPY.confirm),

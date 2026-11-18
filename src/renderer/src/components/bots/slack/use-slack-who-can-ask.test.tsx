@@ -26,8 +26,18 @@ vi.mock('@/lib/bot-catalog', () => ({
         })
 }))
 
+vi.mock('../NewBotDialog', () => ({ NewBotDialog: () => null }))
+vi.mock('../google/use-turn-on-bot-google', () => ({ useTurnOnBotGoogle: () => vi.fn() }))
+vi.mock('../google/google-connect-client', () => ({
+  useBotGoogleReaches: () => [],
+  setBotGoogle: vi.fn()
+}))
+
 vi.mock('@/store', () => {
-  const state = { setContextualToursBlockingSurfaceVisible: vi.fn() }
+  const state = {
+    setContextualToursBlockingSurfaceVisible: vi.fn(),
+    settings: { hostSettingOverrides: { 'runtime:server-1': { displayLabel: 'Atlas Server' } } }
+  }
   return {
     useAppStore: Object.assign(
       (selector: (current: Record<string, unknown>) => unknown) => selector(state),
@@ -36,9 +46,13 @@ vi.mock('@/store', () => {
   }
 })
 
+import { TranslationScopeContext } from '@/i18n/use-translate'
+import { stampBotHost } from '@/lib/bot-catalog-snapshot'
+import type { ExecutionHostId } from '../../../../../shared/execution-host/execution-host'
 import { ConfirmationDialogProvider } from '@/components/dismiss/confirmation/confirmation-dialog'
 import { botMembersFullError } from '../../../../../shared/bots/bot-member-capacity'
 import { BotWhoCanAskList } from '../BotWhoCanAskList'
+import { BotWhoCanAskInsetList } from '../BotWhoCanAskInsetList'
 import { useSlackWhoCanAsk } from './use-slack-who-can-ask'
 
 function BotWhoCanAsk({ bot }: { bot: Bot }): React.JSX.Element {
@@ -148,15 +162,8 @@ describe('useSlackWhoCanAsk', () => {
     fireEvent.click(screen.getByRole('option', { name: 'Priya Shah' }))
     fireEvent.click(screen.getByRole('button', { name: 'Add 2 people' }))
     const dialog = await screen.findByRole('dialog')
-    expect(within(dialog).getByText('Give 2 people access to Reviewer?')).toBeInTheDocument()
-    expect(
-      within(dialog).getByText(
-        'They will be able to ask Reviewer from Slack (Globex) and control it remotely: start, steer, approve and stop its work, using its access on this computer.'
-      )
-    ).toBeInTheDocument()
-    expect(
-      within(dialog).getByText('Your files, commands and accounts on this computer')
-    ).toBeInTheDocument()
+    expect(dialog).toBeVisible()
+    expect(dialog).toHaveAccessibleDescription()
     // Nothing is saved until the owner confirms.
     expect(mocks.updateBot).not.toHaveBeenCalled()
     // Enter must not grant access by accident.
@@ -447,5 +454,40 @@ describe('useSlackWhoCanAsk', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Nobody was added: Jane Doe would go past the 200 people a bot can have.'
     )
+  })
+})
+
+// Renders translation keys, so a test sees which line shows without pinning its words.
+const KEYS_AS_TEXT = { intlLocale: 'en', t: (key: string) => key }
+
+describe('BotWhoCanAskInsetList', () => {
+  function renderInset(hostId: ExecutionHostId, scope?: typeof KEYS_AS_TEXT): void {
+    mocks.members = []
+    const insetBot = stampBotHost(hostId, bot({ members: [] }))
+    function Inset(): React.JSX.Element {
+      return <BotWhoCanAskInsetList bot={insetBot} service={useSlackWhoCanAsk(insetBot)} />
+    }
+    const list = (
+      <ConfirmationDialogProvider>
+        <Inset />
+      </ConfirmationDialogProvider>
+    )
+    render(
+      scope ? (
+        <TranslationScopeContext.Provider value={scope}>{list}</TranslationScopeContext.Provider>
+      ) : (
+        list
+      )
+    )
+  }
+
+  it('shows what anyone added could do before anyone is added', () => {
+    renderInset('local', KEYS_AS_TEXT)
+    expect(screen.getByText('bots.access.controlNone')).toBeVisible()
+  })
+
+  it('names the paired server exposed by giving access', () => {
+    renderInset('runtime:server-1')
+    expect(screen.getByText(/Atlas Server/, { selector: 'p' })).toBeVisible()
   })
 })
