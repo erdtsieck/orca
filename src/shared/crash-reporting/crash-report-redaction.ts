@@ -21,7 +21,7 @@ const SECRET_PATTERNS = [
 ]
 const CREDENTIAL_URL_PATTERN = /\b[A-Za-z0-9._%+-]+:[A-Za-z0-9._%+-]+@(?=[^/\s]+)/g
 const SECRET_ASSIGNMENT_PATTERN =
-  /\b(token|access[_-]?token|refresh[_-]?token|api[_-]?key|client[_-]?secret|secret|password|account[_-]?key)\s*[:=]\s*(?:"[^"\r\n]*"|'[^'\r\n]*'|[^&\s,;]+)/gi
+  /\b(token|access[_-]?token|refresh[_-]?token|api[_-]?key|client[_-]?secret|secret|password|account[_-]?key)(?:\\?["'])?\s*[:=]\s*(?:\\"(?:\\[^"]|[^"\\\r\n])*\\"|"(?:\\.|[^"\\\r\n])*"|"[^"\r\n]*"|'[^'\r\n]*'|[^&\s,;]+)/gi
 
 // Quoted paths retain spaces; unquoted paths stop at whitespace to preserve prose.
 const PATH_PATTERNS = [
