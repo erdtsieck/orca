@@ -55,34 +55,23 @@ function OfflineHeader({ bot }: { bot: Bot }): React.JSX.Element {
   )
 }
 
-/** Why no chats show yet: still reading, the read failed, or the bot's host can't list them here. */
+/** Why no chats show yet: still reading, or the read failed. */
 function ChatsReadNote({
   state,
   retry
 }: {
-  state: 'loading' | 'failed' | 'unsupported'
+  state: 'loading' | 'failed'
   retry: () => void
 }): React.JSX.Element {
   const t = useTranslate()
-  const setRightSidebarTab = useAppStore((s) => s.setRightSidebarTab)
   if (state === 'loading') {
     return <p className={NOTE}>{t('bots.chats.loading', 'Loading chats…')}</p>
   }
-  if (state === 'failed') {
-    return (
-      <p className={NOTE}>
-        {t('bots.chats.readFailed', "Couldn't read this bot's chats.")}{' '}
-        <Button variant="link" size="inlineText" onClick={retry}>
-          {t('bots.chats.searchRetry', 'Try again')}
-        </Button>
-      </p>
-    )
-  }
   return (
     <p className={NOTE}>
-      {t('bots.chats.unsupported', "This bot's computer runs an older Orca that can't list chats.")}{' '}
-      <Button variant="link" size="inlineText" onClick={() => setRightSidebarTab('bot-activity')}>
-        {t('bots.chats.seeItems', 'See its work in Items')}
+      {t('bots.chats.readFailed', "Couldn't read this bot's chats.")}{' '}
+      <Button variant="link" size="inlineText" onClick={retry}>
+        {t('bots.chats.searchRetry', 'Try again')}
       </Button>
     </p>
   )

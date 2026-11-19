@@ -24797,8 +24797,7 @@
     },
     "upcoming": {
       "tidyNightAfter": "Todas as noites após {{from}}, ou assim que este computador estiver ativo",
-      "tidyWeekAfter": "Uma vez por semana após {{from}}, ou assim que este computador estiver ativo",
-      "lookDueNow": "Previsto agora · {{every}}"
+      "tidyWeekAfter": "Uma vez por semana após {{from}}, ou assim que este computador estiver ativo"
     },
     "palette": {
       "placeholder": "Buscar bots, chats, terminais, worktrees, configurações e ações...",
